@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="ALL" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="90ceae7d-99a2-4b86-9809-faa87c007349" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/compliant-counter/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/compliant-counter/contracts/src/Counter.sol" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/compliant-counter/src/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/metacoin/.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/compliant-counter/.env.example" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/metacoin/contracts/.github/workflows/test.yml" beforeDir="false" afterPath="$PROJECT_DIR$/compliant-counter/contracts/.github/workflows/test.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/metacoin/contracts/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/compliant-counter/contracts/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/metacoin/contracts/MetaCoin.sol" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/metacoin/contracts/PredicateClient.sol" beforeDir="false" afterPath="$PROJECT_DIR$/compliant-counter/contracts/src/PredicateClient.sol" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/metacoin/contracts/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/compliant-counter/contracts/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/metacoin/contracts/foundry.toml" beforeDir="false" afterPath="$PROJECT_DIR$/compliant-counter/contracts/foundry.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/metacoin/contracts/interfaces/IPredicateClient.sol" beforeDir="false" afterPath="$PROJECT_DIR$/compliant-counter/contracts/src/interface/IPredicateClient.sol" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/metacoin/contracts/interfaces/IPredicateManager.sol" beforeDir="false" afterPath="$PROJECT_DIR$/compliant-counter/contracts/src/interface/IPredicateManager.sol" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/metacoin/contracts/lib/forge-std" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/metacoin/contracts/script/Counter.s.sol" beforeDir="false" afterPath="$PROJECT_DIR$/compliant-counter/contracts/script/Counter.s.sol" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/metacoin/contracts/scripts/DeployMetaCoin.s.sol" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/metacoin/contracts/src/Counter.sol" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/metacoin/contracts/test/Counter.t.sol" beforeDir="false" afterPath="$PROJECT_DIR$/compliant-counter/contracts/test/Counter.t.sol" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/metacoin/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/compliant-counter/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/metacoin/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/compliant-counter/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/metacoin/src/index.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/metacoin/tsconfig.json" beforeDir="false" afterPath="$PROJECT_DIR$/compliant-counter/tsconfig.json" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="GOROOT" url="file:///opt/homebrew/opt/go/libexec" />
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;Jesse-Sawa&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/predicatelabs/predicate-examples.git&quot;,
+    &quot;accountId&quot;: &quot;b06d903b-f82b-4b8f-85e8-ce0c39e3cc7b&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 4
+}</component>
+  <component name="ProjectId" id="2sP0M3vBBpmxFxHns0K8ndyKnyY" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.formatter.settings.were.checked&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.migrated.go.modules.settings&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.modules.go.list.on.any.changes.was.set&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;go.import.settings.migrated&quot;: &quot;true&quot;,
+    &quot;go.sdk.automatically.set&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/jessesawa/zDev/predicate-examples/metacoin/contracts&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/Users/jessesawa/zDev/predicate-examples/compliant-uniswap/node_modules/typescript/lib&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/metacoin/contracts" />
+      <recent name="$PROJECT_DIR$/metacoin/contracts/scripts" />
+      <recent name="$PROJECT_DIR$/metacoin/contracts/interfaces" />
+      <recent name="$PROJECT_DIR$/metacoin" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/compliant-counter/contracts/src" />
+      <recent name="$PROJECT_DIR$/metacoin/contracts/src" />
+      <recent name="$PROJECT_DIR$/metacoin/src" />
+      <recent name="$PROJECT_DIR$/uniswap-v4" />
+    </key>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-gosdk-d297c17c1fbd-d82d926f19eb-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-243.22562.186" />
+        <option value="bundled-js-predefined-d6986cc7102b-deb605915726-JavaScript-GO-243.22562.186" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="VgoProject">
+    <settings-migrated>true</settings-migrated>
+  </component>
+</project>
