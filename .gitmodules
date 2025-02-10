@@ -28,3 +28,6 @@
 [submodule "lib/contracts"]
 	path = lib/contracts
 	url = https://github.com/across-protocol/contracts
+[submodule "compliant-counter/contracts/lib/forge-std"]
+	path = compliant-counter/contracts/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
