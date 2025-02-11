@@ -1,0 +1,34 @@
+# Compiler files
+cache/
+out/
+
+# Ignoring environment files
+.env
+.env.local
+
+# Dependency directories
+lib/
+node_modules/
+
+# Foundry specific
+broadcast/
+*.json
+
+# IDE and editor files
+.vscode/
+.idea/
+*.iml
+*.swp
+*~
+
+# Logs
+*.log
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Hardhat and other blockchain dev files
+artifacts/
+coverage/
+coverage.json
