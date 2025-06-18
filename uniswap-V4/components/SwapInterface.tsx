@@ -196,8 +196,7 @@ export function SwapInterface() {
       const needsERC20Approval = erc20Allowance < amountInWei;
       const needsNewPermit2Signature = Permit2Client.needsNewSignature(
         permit2AllowanceResult, 
-        amountInWei, 
-        permit2Signature
+        amountInWei
       );
       
       setNeedsApproval(needsERC20Approval || needsNewPermit2Signature);

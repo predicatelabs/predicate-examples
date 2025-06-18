@@ -104,7 +104,8 @@ export class Permit2Client {
    * This creates a large allowance that can be used multiple times
    */
   static async createPermit2Signature(
-    walletClient: { account: { address: string }; signTypedData: (params: unknown) => Promise<string> },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    walletClient: any,
     token: string,
     amount: bigint,
     spender: string
