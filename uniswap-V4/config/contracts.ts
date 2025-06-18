@@ -18,32 +18,6 @@ export const CONTRACTS = {
   SERVICE_MANAGER: '0xf6f4A30EeF7cf51Ed4Ee1415fB3bFDAf3694B0d2', // Predicate Service Manager
 } as const;
 
-/*
- * UNISWAP V4 ARCHITECTURE NOTES:
- * 
- * 1. SWAPPING IN V4:
- *    - Use UNIVERSAL_ROUTER for all swaps (not PoolManager directly)
- *    - Universal Router handles V4_SWAP commands with encoded actions
- *    - Actions sequence: SWAP_EXACT_IN_SINGLE (0x06) -> SETTLE_ALL (0x0c) -> TAKE_ALL (0x0f)
- *    - Requires Permit2 for token approvals
- * 
- * 2. V4 POOLS:
- *    - All pools managed by single PoolManager contract
- *    - PoolKey identifies pools: {currency0, currency1, fee, tickSpacing, hooks}
- *    - Hooks enable custom logic (like our PredicateHook)
- * 
- * 3. PREDICATE INTEGRATION:
- *    - PredicateHook intercepts beforeSwap() calls
- *    - Validates swap against predicate policies
- *    - Policy validation happens via SERVICE_MANAGER
- */
-
-export const PREDICATE_CONFIG = {
-  API_URL: 'https://api.predicate.io/',
-  NETWORK: 'mainnet',
-  POLICY_ID: 'x-test-prod-001', // YOUR DEPLOYED POLICY ID
-} as const;
-
 export const POOL_CONFIG = {
   // Pool configuration matching working examples
   FEE_TIER: 0, // Zero fees as used in working examples

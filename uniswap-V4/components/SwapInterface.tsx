@@ -4,14 +4,19 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAccount, useBalance, useWriteContract, useWaitForTransactionReceipt, useWalletClient } from 'wagmi';
 import type { UseBalanceReturnType } from 'wagmi';
 import { formatUnits, parseUnits } from 'viem';
-import { ethers } from 'ethers';
 
 import { TOKEN_CONFIG, CONTRACTS, POOL_CONFIG } from '@/config/contracts';
-import { PredicateClient } from '@/lib/predicate-client';
-import { UniversalRouterDebugger } from '@/lib/universal-router-debug';
 import { Permit2Client } from '@/lib/permit2-client';
 import type { Permit2Allowance, Permit2Signature } from '@/lib/permit2-client';
-import type { PredicateRequest, Token, PoolKey, BeforeSwapArgs } from '@/types/predicate';
+import type { Token, PoolKey, BeforeSwapArgs } from '@/types/uniswapv4';
+import type { PredicateRequest } from '@predicate/core';
+
+import {
+  encodeBeforeSwapCall,
+  encodeAddress_Uint256,
+  encodePredicateMessage,
+  encodePermit2Permit, encodeExactInputSingleParams, encodeBytes_BytesArray
+} from '@/lib/v4-encoder';
 
 // Constants
 const TOKENS = [TOKEN_CONFIG.USDC, TOKEN_CONFIG.USDT] as const;
@@ -315,8 +320,7 @@ export function SwapInterface() {
     setTxHash(null);
 
     try {
-      const predicateClient = new PredicateClient('');
-      
+
       const token0 = tokenIn.address.toLowerCase() < tokenOut.address.toLowerCase() ? tokenIn : tokenOut;
       const token1 = tokenIn.address.toLowerCase() < tokenOut.address.toLowerCase() ? tokenOut : tokenIn;
       
@@ -338,7 +342,7 @@ export function SwapInterface() {
         amountSpecified: amountSpecified
       };
 
-      const encodedCall = predicateClient.encodeBeforeSwapCall(beforeSwapArgs);
+      const encodedCall = encodeBeforeSwapCall(beforeSwapArgs);
       
       const predicateRequest: PredicateRequest = {
         from: address,
@@ -347,17 +351,31 @@ export function SwapInterface() {
         msg_value: '0'
       };
 
-      // Get Predicate authorization
-      const evaluationResult = await predicateClient.evaluatePolicy(predicateRequest);
-      
-      if (!evaluationResult.is_compliant) {
-        throw new Error(`Transaction not compliant with policy: ${evaluationResult.error || 'Unknown reason'}`);
+      // Get Predicate authorization from backend API
+      const evaluationResponse = await fetch('/api/evaluate-policy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(predicateRequest),
+      });
+
+      if (!evaluationResponse.ok) {
+        throw new Error(`Policy evaluation failed: ${evaluationResponse.statusText}`);
       }
 
-      // Encode the predicate message for hookData
-      const predicateMessage = predicateClient.signaturesToBytes(evaluationResult);
-      const hookData = predicateClient.encodePredicateMessage(predicateMessage);
+      const evaluationResult = await evaluationResponse.json();
 
+      if (!evaluationResult.is_compliant) {
+        throw new Error(`Transaction not compliant with policy`);
+      }
+
+      // Convert signatures to bytes for hookData
+      const predicateMessage = {
+        taskId: evaluationResult.task_id || '',
+        expireByBlockNumber: evaluationResult.expire_by_block_number || 0,
+        signerAddresses: evaluationResult.signer_addresses || [],
+        signatures: evaluationResult.signatures || []
+      };
+      const hookData = encodePredicateMessage(predicateMessage);
       const amountOutMin = parseUnits('0.1', tokenOut.decimals);
 
       // Build Universal Router commands and inputs
@@ -369,13 +387,13 @@ export function SwapInterface() {
         commands = `0x0a10`; // PERMIT2_PERMIT + V4_SWAP
         
         // Input 0: PERMIT2_PERMIT parameters
-        inputs[0] = predicateClient.encodePermit2Permit(permit2Signature);
+        inputs[0] = encodePermit2Permit(permit2Signature);
         
         // Input 1: V4_SWAP parameters
         const v4Actions = `0x060c0f`; // SWAP_EXACT_IN_SINGLE, SETTLE_ALL, TAKE_ALL
         const v4Params: string[] = [];
         
-        v4Params[0] = predicateClient.encodeExactInputSingleParams({
+        v4Params[0] = encodeExactInputSingleParams({
           poolKey,
           zeroForOne: isZeroForOne,
           amountIn: amountInWei,
@@ -383,17 +401,17 @@ export function SwapInterface() {
           hookData,
         });
 
-        v4Params[1] = predicateClient.encodeAddress_Uint256([
+        v4Params[1] = encodeAddress_Uint256([
           isZeroForOne ? poolKey.currency0 : poolKey.currency1,
           amountInWei.toString()
         ]);
 
-        v4Params[2] = predicateClient.encodeAddress_Uint256([
+        v4Params[2] = encodeAddress_Uint256([
           isZeroForOne ? poolKey.currency1 : poolKey.currency0,
           amountOutMin.toString()
         ]);
         
-        inputs[1] = predicateClient.encodeBytes_BytesArray([v4Actions, v4Params]);
+        inputs[1] = encodeBytes_BytesArray([v4Actions, v4Params]);
         
       } else {
         // Case 2: We have a valid existing allowance
@@ -402,7 +420,7 @@ export function SwapInterface() {
         const v4Actions = `0x060c0f`; // SWAP_EXACT_IN_SINGLE, SETTLE_ALL, TAKE_ALL
         const v4Params: string[] = [];
         
-        v4Params[0] = predicateClient.encodeExactInputSingleParams({
+        v4Params[0] = encodeExactInputSingleParams({
           poolKey,
           zeroForOne: isZeroForOne,
           amountIn: amountInWei,
@@ -410,33 +428,20 @@ export function SwapInterface() {
           hookData,
         });
 
-        v4Params[1] = predicateClient.encodeAddress_Uint256([
+        v4Params[1] = encodeAddress_Uint256([
           isZeroForOne ? poolKey.currency0 : poolKey.currency1,
           amountInWei.toString()
         ]);
 
-        v4Params[2] = predicateClient.encodeAddress_Uint256([
+        v4Params[2] = encodeAddress_Uint256([
           isZeroForOne ? poolKey.currency1 : poolKey.currency0,
           amountOutMin.toString()
         ]);
         
-        inputs[0] = predicateClient.encodeBytes_BytesArray([v4Actions, v4Params]);
+        inputs[0] = encodeBytes_BytesArray([v4Actions, v4Params]);
       }
 
       const deadline = Math.floor(Date.now() / 1000) + TRANSACTION_DEADLINE_SECONDS;
-
-      // Log diagnostic info for debugging
-      try {
-        const abiCoder = ethers.AbiCoder.defaultAbiCoder();
-        const mockCalldata = abiCoder.encode(
-          ['bytes', 'bytes[]', 'uint256'],
-          [commands, inputs, deadline]
-        );
-        const diagnostic = UniversalRouterDebugger.generateDiagnosticReport('0x3593564c' + mockCalldata.slice(2));
-        console.log('Universal Router Diagnostic:', diagnostic);
-      } catch (debugError) {
-        console.warn('Debug analysis failed:', debugError);
-      }
 
       writeContract({
         address: CONTRACTS.UNIVERSAL_ROUTER as `0x${string}`,

@@ -1,138 +1,96 @@
-# Uniswap V4 Swap App
+# Predicate V4 Swap
 
-A minimal NextJS application for swapping USDC and USDT using Uniswap V4 with Predicate policy compliance.
-
-## Features
-
-- 🔄 Simple USDC ↔ USDT swaps
-- 🔐 Policy-compliant transactions via Predicate API
-- 🦄 Uniswap V4 integration with hooks
-- 💰 Wallet connection with RainbowKit
-- 📱 Responsive design with Tailwind CSS
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+ and npm
-- A Predicate API key (contact Predicate team for production keys)
-- WalletConnect Project ID (get from [WalletConnect Cloud](https://cloud.walletconnect.com))
-
-### Installation
-
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd uniswap-v4
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Create a `.env.local` file:
-```bash
-# Predicate API Configuration
-NEXT_PUBLIC_PREDICATE_API_KEY=your_predicate_api_key_here
-
-# WalletConnect Project ID
-NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=your_walletconnect_project_id_here
-
-# Contract Addresses (update with actual deployed addresses)
-NEXT_PUBLIC_PREDICATE_HOOK_ADDRESS=0x0000000000000000000000000000000000000000
-NEXT_PUBLIC_POOL_MANAGER_ADDRESS=0x0000000000000000000000000000000000000000
-NEXT_PUBLIC_POSITION_MANAGER_ADDRESS=0x0000000000000000000000000000000000000000
-```
-
-4. Run the development server:
-```bash
-npm run dev
-```
-
-5. Open [http://localhost:3000](http://localhost:3000) with your browser.
-
-## Configuration
-
-### Contract Addresses
-
-Update the contract addresses in `config/contracts.ts`:
-
-- `PREDICATE_HOOK`: The deployed Predicate Hook contract address
-- `POOL_MANAGER`: Uniswap V4 Pool Manager address
-- `POSITION_MANAGER`: Uniswap V4 Position Manager address
-- `USDC` and `USDT`: Token contract addresses
-
-### Predicate Configuration
-
-Update the Predicate configuration in `config/contracts.ts`:
-
-- `API_URL`: Predicate API endpoint
-- `POLICY_ID`: Your specific policy ID
-
-## How It Works
-
-1. **Connect Wallet**: Users connect their Ethereum wallet via RainbowKit
-2. **Select Tokens**: Choose between USDC and USDT for swapping
-3. **Enter Amount**: Specify the amount to swap
-4. **Policy Validation**: The app calls the Predicate API to validate the transaction
-5. **Execute Swap**: If compliant, the swap is executed on Uniswap V4
+A policy-compliant Uniswap V4 swap interface that validates transactions through Predicate's compliance API before execution.
 
 ## Architecture
 
+**Policy Compliance Flow:**
+1. User initiates USDC ↔ USDT swap
+2. Transaction data sent to Predicate API for policy validation
+3. Predicate returns compliance status + authorization signatures
+4. Signatures encoded into Uniswap V4 `hookData` parameter
+5. On-chain `PredicateHook` validates signatures during swap execution
+
+**Technical Stack:**
+- **Frontend**: Next.js 15 + TypeScript + Tailwind CSS
+- **Wallet**: RainbowKit + Wagmi v2
+- **Blockchain**: Ethereum mainnet with Viem
+- **DEX**: Uniswap V4 Universal Router with Permit2 approvals
+- **Compliance**: Predicate API integration with hook-based validation
+
+## Project Structure
+
 ```
-uniswap-v4/
-├── app/                 # Next.js app directory
-│   ├── page.tsx        # Main page
-│   ├── layout.tsx      # App layout with providers
-│   └── providers.tsx   # Wagmi and RainbowKit providers
-├── components/         # React components
-│   └── SwapInterface.tsx
-├── config/            # Configuration files
-│   └── contracts.ts   # Contract addresses and settings
-├── lib/              # Utility libraries
-│   ├── wagmi-config.ts
-│   └── predicate-client.ts
-└── types/            # TypeScript type definitions
-    └── predicate.ts
+├── app/
+│   ├── api/                     # Backend API routes
+│   │   ├── evaluate-policy/     # Predicate policy validation
+│   │   ├── check-allowance/     # ERC20 allowance checks
+│   │   ├── check-permit2-allowance/ # Permit2 allowance + expiration
+│   │   └── get-permit2-nonce/   # Permit2 nonce management
+│   ├── page.tsx                 # Main swap interface page
+│   ├── layout.tsx               # App layout with providers
+│   └── providers.tsx            # Wagmi + RainbowKit setup
+├── components/
+│   └── SwapInterface.tsx        # Main swap UI component
+├── config/
+│   └── contracts.ts             # Contract addresses & pool config
+├── lib/
+│   ├── v4-encoder.ts           # Uniswap V4 parameter encoding
+│   ├── permit2-client.ts       # Permit2 signature management
+│   └── wagmi-config.ts         # Wallet connection config
+└── types/
+    └── uniswapv4.ts            # TypeScript type definitions
 ```
 
 ## Key Components
 
-- **SwapInterface**: Main swap UI component
-- **PredicateClient**: Handles Predicate API interactions
-- **Providers**: Wagmi and RainbowKit configuration
+### SwapInterface (`components/SwapInterface.tsx`)
+- **Approval Flow**: ERC20 → Permit2 → Universal Router
+- **Policy Integration**: Calls Predicate API before transaction submission
+- **State Management**: Handles allowances, signatures, and transaction status
+- **UI**: Token selection, amount input, approval progress
 
-## Development Notes
+### V4 Encoder (`lib/v4-encoder.ts`)
+- **Transaction Encoding**: Formats Uniswap V4 parameters for Universal Router
+- **Hook Integration**: Encodes Predicate signatures into `hookData`
+- **Permit2 Integration**: Handles permit signature encoding
 
-This is a **proof of concept** application. For production use:
+### API Routes (`app/api/`)
+- **Policy Evaluation**: Validates transactions with Predicate API
+- **Allowance Management**: Checks ERC20 and Permit2 allowances
+- **Nonce Handling**: Manages Permit2 nonce state for signatures
 
-1. Replace placeholder contract addresses with actual deployed contracts
-2. Implement proper error handling and user feedback
-3. Add transaction confirmation and status tracking
-4. Implement actual price feeds instead of 1:1 simulation
-5. Add slippage protection and deadline settings
-6. Implement proper token allowance handling
+## Setup
 
-## Technologies Used
+```bash
+npm install
+```
+
+Create `.env.local`:
+```bash
+NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=your_project_id
+```
+
+```bash
+npm run dev
+```
+
+## Contract Addresses (Mainnet)
+
+- **PredicateHook**: `0x145b39c7F5af791813Ba1fB16A4de63fDfCfA8A0`
+- **Universal Router**: `0x66a9893cc07d91d95644aedd05d03f95e1dba8af`
+- **Permit2**: `0x000000000022D473030F116dDEE9F6B43aC78BA3`
+- **USDC**: `0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48`
+- **USDT**: `0xdAC17F958D2ee523a2206206994597C13D831ec7`
+
+## Technologies
 
 - [Next.js 15](https://nextjs.org/) - React framework
-- [TypeScript](https://www.typescriptlang.org/) - Type safety
-- [Tailwind CSS](https://tailwindcss.com/) - Styling
-- [RainbowKit](https://www.rainbowkit.com/) - Wallet connection
-- [Wagmi](https://wagmi.sh/) - Ethereum interactions
-- [Viem](https://viem.sh/) - Ethereum utilities
+- [Wagmi v2](https://wagmi.sh/) - Ethereum React hooks
+- [Viem](https://viem.sh/) - TypeScript Ethereum library
+- [RainbowKit](https://rainbowkit.com/) - Wallet connection UI
 - [Uniswap V4](https://docs.uniswap.org/contracts/v4) - DEX protocol
-- [Predicate](https://predicate.io/) - Policy compliance
-
-## Contributing
-
-This is a production-ready Uniswap V4 swap interface. Feel free to extend it with:
-
-- Additional token pairs
-- Advanced trading features
-- Portfolio tracking
-- Analytics dashboard
+- [Predicate](https://predicate.io/) - Policy compliance validation
 
 ## License
 
