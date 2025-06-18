@@ -1,6 +1,5 @@
 import { ethers } from 'ethers';
 import { PredicateRequest, PredicateEvaluationResult, PredicateMessage, BeforeSwapArgs } from '@/types/predicate';
-import { FUNCTION_SIGNATURES } from '@/config/contracts';
 // Using local implementations due to type incompatibilities with @predicate/core
 
 export class PredicateClient {
@@ -197,7 +196,19 @@ export class PredicateClient {
    * Encodes parameters for PERMIT2_PERMIT Universal Router command (0x0a)
    * Based on official Universal Router documentation
    */
-  encodePermit2Permit(permitSignature: any): string {
+  encodePermit2Permit(permitSignature: {
+    permitSingle: {
+      details: {
+        token: string;
+        amount: string;
+        expiration: number;
+        nonce: number;
+      };
+      spender: string;
+      sigDeadline: number;
+    };
+    signature: string;
+  }): string {
     const abiCoder = ethers.AbiCoder.defaultAbiCoder();
     
     // PERMIT2_PERMIT expects: (PermitSingle permitSingle, bytes signature)

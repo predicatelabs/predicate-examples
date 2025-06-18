@@ -75,7 +75,10 @@ export class PoolInitializer {
     exists: boolean;
     sqrtPriceX96?: string;
     tick?: number;
-    details?: any;
+            details?: {
+          protocolFee: string;
+          lpFee: string;
+        };
   }> {
     try {
       const poolManager = new ethers.Contract(

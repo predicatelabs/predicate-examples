@@ -39,7 +39,7 @@ interface PoolStatus {
 }
 
 export function PoolManager() {
-  const { address, isConnected } = useAccount();
+  const { isConnected } = useAccount();
   const [poolStatus, setPoolStatus] = useState<PoolStatus>({ exists: false, checking: false });
   const [showDetails, setShowDetails] = useState(false);
 
@@ -91,13 +91,13 @@ export function PoolManager() {
       abi: POOL_MANAGER_ABI,
       functionName: 'initialize',
       args: [
-        [
-          poolKey.currency0 as `0x${string}`,
-          poolKey.currency1 as `0x${string}`,
-          poolKey.fee,
-          poolKey.tickSpacing,
-          poolKey.hooks as `0x${string}`
-        ],
+        {
+          currency0: poolKey.currency0 as `0x${string}`,
+          currency1: poolKey.currency1 as `0x${string}`,
+          fee: poolKey.fee,
+          tickSpacing: poolKey.tickSpacing,
+          hooks: poolKey.hooks as `0x${string}`
+        },
         BigInt(txData.sqrtPriceX96)
       ],
     });

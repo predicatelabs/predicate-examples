@@ -104,7 +104,7 @@ export class Permit2Client {
    * This creates a large allowance that can be used multiple times
    */
   static async createPermit2Signature(
-    walletClient: any, // wagmi wallet client
+    walletClient: { account: { address: string }; signTypedData: (params: unknown) => Promise<string> },
     token: string,
     amount: bigint,
     spender: string
@@ -249,8 +249,7 @@ export class Permit2Client {
    */
   static needsNewSignature(
     allowance: Permit2Allowance | null,
-    requiredAmount: bigint,
-    existingSignature?: Permit2Signature | null
+    requiredAmount: bigint
   ): boolean {
     // If we have a valid allowance, we don't need a new signature
     if (this.isAllowanceValid(allowance, requiredAmount)) {

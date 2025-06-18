@@ -87,7 +87,7 @@ export class UniversalRouterDebugger {
         byte,
         allowRevert,
         command,
-        commandName: (this.COMMANDS as any)[command] || `UNKNOWN_${command.toString(16)}`
+        commandName: (this.COMMANDS as Record<number, string>)[command] || `UNKNOWN_${command.toString(16)}`
       };
     });
   }
@@ -109,7 +109,7 @@ export class UniversalRouterDebugger {
     const actionBytes = ethers.getBytes(actions);
     const actionDetails = Array.from(actionBytes).map(action => ({
       action,
-      actionName: (this.V4_ACTIONS as any)[action] || `UNKNOWN_${action.toString(16)}`
+      actionName: (this.V4_ACTIONS as Record<number, string>)[action] || `UNKNOWN_${action.toString(16)}`
     }));
 
     return {
