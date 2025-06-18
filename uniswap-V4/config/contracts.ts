@@ -8,7 +8,7 @@ export const CONTRACTS = {
   POOL_MANAGER: '0x000000000004444c5dc75cB358380D2e3dE08A90', // Uniswap V4 PoolManager (mainnet)
   POSITION_MANAGER: '0xbd216513d74c8cf14cf4747e6aaa6420ff64ee9e', // V4 Position Manager (mainnet)
   UNIVERSAL_ROUTER: '0x66a9893cc07d91d95644aedd05d03f95e1dba8af', // Universal Router (mainnet) - USE THIS FOR SWAPS
-  PERMIT2: '0x000000000022D473030F116dDEE9F6B43aC78BA3', // Permit2 contract
+  PERMIT2: '0x000000000022D473030F116dDEE9F6B43aC78BA3', // Permit2 contract (official address)
   
   // ADDITIONAL V4 PERIPHERY CONTRACTS
   QUOTER: '0x52f0e24d1c21c8a0cb1e5a5dd6198556bd9e1203', // V4 Quoter for price quotes

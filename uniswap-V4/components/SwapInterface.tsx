@@ -6,10 +6,54 @@ import type { UseBalanceReturnType } from 'wagmi';
 import { formatUnits, parseUnits } from 'viem';
 
 import { TOKEN_CONFIG, CONTRACTS, POOL_CONFIG } from '@/config/contracts';
-import { Permit2Client } from '@/lib/permit2-client';
-import type { Permit2Allowance, Permit2Signature } from '@/lib/permit2-client';
+import { 
+  AllowanceTransfer, 
+  PERMIT2_ADDRESS,
+  MaxAllowanceTransferAmount,
+  type PermitSingle 
+} from '@uniswap/permit2-sdk';
+import { createPublicClient, http } from 'viem';
+import { mainnet } from 'viem/chains';
 import type { Token, PoolKey, BeforeSwapArgs } from '@/types/uniswapv4';
 import type { PredicateRequest } from '@predicate/core';
+
+// Create public client for Permit2 contract calls
+const publicClient = createPublicClient({
+  chain: mainnet,
+  transport: http(),
+});
+
+// Permit2 ABI for allowance checks
+const PERMIT2_ABI = [
+  {
+    inputs: [
+      { name: 'owner', type: 'address' },
+      { name: 'token', type: 'address' },
+      { name: 'spender', type: 'address' }
+    ],
+    name: 'allowance',
+    outputs: [
+      { name: 'amount', type: 'uint160' },
+      { name: 'expiration', type: 'uint48' },
+      { name: 'nonce', type: 'uint48' }
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+] as const;
+
+// Simple types for our allowance data
+type Permit2AllowanceData = {
+  token: string;
+  amount: bigint;
+  expiration: number;
+  nonce: number;
+};
+
+type Permit2SignatureData = {
+  permitSingle: PermitSingle;
+  signature: string;
+};
 
 import {
   encodeBeforeSwapCall,
@@ -134,8 +178,8 @@ export function SwapInterface() {
   const [txHash, setTxHash] = useState<string | null>(null);
   const [needsApproval, setNeedsApproval] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
-  const [permit2Allowance, setPermit2Allowance] = useState<Permit2Allowance | null>(null);
-  const [permit2Signature, setPermit2Signature] = useState<Permit2Signature | null>(null);
+  const [permit2Allowance, setPermit2Allowance] = useState<Permit2AllowanceData | null>(null);
+  const [permit2Signature, setPermit2Signature] = useState<Permit2SignatureData | null>(null);
   const [allowanceStatus, setAllowanceStatus] = useState('');
   const [approvalStep, setApprovalStep] = useState<ApprovalStep>('erc20');
   const [transactionStatus, setTransactionStatus] = useState<TransactionStatus>('idle');
@@ -182,14 +226,23 @@ export function SwapInterface() {
       const allowanceData = await allowanceResult.json();
       const erc20Allowance = BigInt(allowanceData.allowance || '0');
       
-      // Step 2: Check Permit2 allowance with expiration
+      // Step 2: Check Permit2 allowance with expiration (using SDK + viem directly)
       let permit2AllowanceResult = null;
       try {
-        permit2AllowanceResult = await Permit2Client.checkPermit2Allowance(
-          address,
-          tokenIn.address,
-          CONTRACTS.UNIVERSAL_ROUTER
-        );
+        const result = await publicClient.readContract({
+          address: PERMIT2_ADDRESS as `0x${string}`,
+          abi: PERMIT2_ABI,
+          functionName: 'allowance',
+          args: [address as `0x${string}`, tokenIn.address as `0x${string}`, CONTRACTS.UNIVERSAL_ROUTER as `0x${string}`],
+        });
+        
+        const [amount, expiration, nonce] = result;
+        permit2AllowanceResult = {
+          token: tokenIn.address,
+          amount: BigInt(amount.toString()),
+          expiration: Number(expiration),
+          nonce: Number(nonce),
+        };
       } catch (permitError) {
         console.warn('Error checking Permit2 allowance:', permitError);
         permit2AllowanceResult = null;
@@ -197,30 +250,35 @@ export function SwapInterface() {
       
       setPermit2Allowance(permit2AllowanceResult);
       
-      // Step 3: Determine what approval is needed
+      // Step 3: Determine what approval is needed (inline validation)
       const needsERC20Approval = erc20Allowance < amountInWei;
-      const needsNewPermit2Signature = Permit2Client.needsNewSignature(
-        permit2AllowanceResult, 
-        amountInWei
-      );
+      const needsNewPermit2Signature = !permit2AllowanceResult || 
+        permit2AllowanceResult.expiration <= Math.floor(Date.now() / 1000) ||
+        permit2AllowanceResult.amount < amountInWei;
       
       setNeedsApproval(needsERC20Approval || needsNewPermit2Signature);
       
-      // Step 4: Update status message and approval step
+      // Step 4: Update status message and approval step (inline formatting)
       if (needsERC20Approval) {
         setAllowanceStatus('Step 1: ERC20 approval needed');
         setApprovalStep('erc20');
       } else if (needsNewPermit2Signature) {
         if (permit2AllowanceResult) {
-          const timeLeft = Permit2Client.formatExpirationTime(permit2AllowanceResult);
-          setAllowanceStatus(`Step 2: Permit2 allowance expired (${timeLeft})`);
+          const timeLeft = Math.max(0, permit2AllowanceResult.expiration - Math.floor(Date.now() / 1000));
+          const minutes = Math.floor(timeLeft / 60);
+          const seconds = timeLeft % 60;
+          const timeDisplay = timeLeft <= 0 ? 'expired' : minutes > 0 ? `${minutes}m ${seconds}s left` : `${seconds}s left`;
+          setAllowanceStatus(`Step 2: Permit2 allowance expired (${timeDisplay})`);
         } else {
           setAllowanceStatus('Step 2: Permit2 allowance needed');
         }
         setApprovalStep('permit2');
       } else {
-        const timeLeft = permit2AllowanceResult ? Permit2Client.formatExpirationTime(permit2AllowanceResult) : '';
-        setAllowanceStatus(`✅ Ready to swap ${permit2Signature ? '(with allowance)' : `(${timeLeft})`}`);
+        const timeLeft = permit2AllowanceResult ? Math.max(0, permit2AllowanceResult.expiration - Math.floor(Date.now() / 1000)) : 0;
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        const timeDisplay = timeLeft <= 0 ? 'expired' : minutes > 0 ? `${minutes}m ${seconds}s left` : `${seconds}s left`;
+        setAllowanceStatus(`✅ Ready to swap ${permit2Signature ? '(with allowance)' : `(${timeDisplay})`}`);
         setApprovalStep('ready');
       }
       
@@ -261,13 +319,52 @@ export function SwapInterface() {
           args: [CONTRACTS.PERMIT2 as `0x${string}`, getMaxUint256()], // Max approval
         });
       } else {
-        // Create Permit2 allowance signature
-        const permit2SignatureResult = await Permit2Client.createPermit2Signature(
-          walletClient,
-          tokenIn.address,
-          amountInWei,
-          CONTRACTS.UNIVERSAL_ROUTER
+        // Create Permit2 allowance signature (using SDK directly)
+        const sigDeadline = Math.floor(Date.now() / 1000) + 7200; // 2 hours
+        const expiration = Math.floor(Date.now() / 1000) + 7200; // 2 hours
+        
+        // Get current nonce from allowance data
+        const result = await publicClient.readContract({
+          address: PERMIT2_ADDRESS as `0x${string}`,
+          abi: PERMIT2_ABI,
+          functionName: 'allowance',
+          args: [address as `0x${string}`, tokenIn.address as `0x${string}`, CONTRACTS.UNIVERSAL_ROUTER as `0x${string}`],
+        });
+        const [, , nonce] = result;
+        
+        // Create PermitSingle using SDK types
+        const permitSingle: PermitSingle = {
+          details: {
+            token: tokenIn.address,
+            amount: MaxAllowanceTransferAmount.toString(),
+            expiration,
+            nonce: Number(nonce),
+          },
+          spender: CONTRACTS.UNIVERSAL_ROUTER,
+          sigDeadline,
+        };
+
+        // Get typed data using the official SDK
+        const { domain, types, values } = AllowanceTransfer.getPermitData(
+          permitSingle,
+          PERMIT2_ADDRESS,
+          1 // Mainnet chain ID
         );
+
+        // Sign the permit using wagmi wallet client (with type casting for compatibility)
+        const signature = await walletClient.signTypedData({
+          domain: {
+            name: domain.name,
+            version: domain.version,
+            chainId: Number(domain.chainId),
+            verifyingContract: domain.verifyingContract as `0x${string}`,
+          },
+          types,
+          primaryType: 'PermitSingle',
+          message: values as unknown as Record<string, unknown>,
+        });
+
+        const permit2SignatureResult = { permitSingle, signature };
         
         setPermit2Signature(permit2SignatureResult);
         setIsApproving(false);
@@ -308,7 +405,12 @@ export function SwapInterface() {
       return;
     }
     
-    const hasValidPermit = permit2Signature || Permit2Client.isAllowanceValid(permit2Allowance, amountInWei);
+    // Inline validation instead of wrapper call
+    const hasValidPermit = permit2Signature || (
+      permit2Allowance && 
+      permit2Allowance.expiration > Math.floor(Date.now() / 1000) &&
+      permit2Allowance.amount >= amountInWei
+    );
     
     if (!hasValidPermit) {
       setError('Insufficient Permit2 allowance. Please approve again.');
@@ -386,8 +488,22 @@ export function SwapInterface() {
         // Case 1: We have a fresh permit signature - need to establish allowance
         commands = `0x0a10`; // PERMIT2_PERMIT + V4_SWAP
         
-        // Input 0: PERMIT2_PERMIT parameters
-        inputs[0] = encodePermit2Permit(permit2Signature);
+        // Input 0: PERMIT2_PERMIT parameters  
+        // Convert SDK signature format to encoding format
+        const permitForEncoding = {
+          permitSingle: {
+            details: {
+              token: permit2Signature.permitSingle.details.token,
+              amount: permit2Signature.permitSingle.details.amount.toString(),
+              expiration: Number(permit2Signature.permitSingle.details.expiration),
+              nonce: Number(permit2Signature.permitSingle.details.nonce),
+            },
+            spender: permit2Signature.permitSingle.spender,
+            sigDeadline: Number(permit2Signature.permitSingle.sigDeadline),
+          },
+          signature: permit2Signature.signature,
+        };
+        inputs[0] = encodePermit2Permit(permitForEncoding);
         
         // Input 1: V4_SWAP parameters
         const v4Actions = `0x060c0f`; // SWAP_EXACT_IN_SINGLE, SETTLE_ALL, TAKE_ALL

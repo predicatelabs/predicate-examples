@@ -4,7 +4,7 @@ A policy-compliant Uniswap V4 swap interface that validates transactions through
 
 ## Architecture
 
-**Policy Compliance Flow:**
+**Policy With Predicate:**
 1. User initiates USDC ↔ USDT swap
 2. Transaction data sent to Predicate API for policy validation
 3. Predicate returns compliance status + authorization signatures
@@ -56,9 +56,9 @@ A policy-compliant Uniswap V4 swap interface that validates transactions through
 - **Permit2 Integration**: Handles permit signature encoding
 
 ### API Routes (`app/api/`)
-- **Policy Evaluation**: Validates transactions with Predicate API
-- **Allowance Management**: Checks ERC20 and Permit2 allowances
-- **Nonce Handling**: Manages Permit2 nonce state for signatures
+- **Policy Evaluation**: Validates transactions with Predicate API  
+- **ERC20 Allowances**: Checks ERC20 → Permit2 approvals
+- **Permit2**: Direct frontend integration with `@uniswap/permit2-sdk`
 
 ## Setup
 
