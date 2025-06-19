@@ -957,6 +957,7 @@ function TokenSection({
               lineHeight: '1.5rem',
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'flex-end',
               width: 0
             }}
           >
