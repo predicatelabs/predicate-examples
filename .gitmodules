@@ -31,9 +31,9 @@
 [submodule "compliant-counter/contracts/lib/forge-std"]
 	path = compliant-counter/contracts/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
-[submodule "metacoin/lib/forge-std"]
-	path = metacoin/lib/forge-std
+[submodule "counter/lib/forge-std"]
+	path = counter/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
-[submodule "metacoin/lib/predicate-contracts"]
-	path = metacoin/lib/predicate-contracts
+[submodule "counter/lib/predicate-contracts"]
+	path = counter/lib/predicate-contracts
 	url = https://github.com/PredicateLabs/predicate-contracts
