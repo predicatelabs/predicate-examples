@@ -1,0 +1,48 @@
+[submodule "compliant-uniswap/lib/forge-std"]
+	path = forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "compliant-uniswap/lib/v4-core"]
+	path = v4-core
+	url = https://github.com/uniswap/v4-core
+[submodule "compliant-uniswap/lib/v4-periphery"]
+	path = v4-periphery
+	url = https://github.com/uniswap/v4-periphery
+[submodule "predicate-std"]
+	path = compliant-uniswap/lib/predicate-std
+	url = https://github.com/PredicateLabs/predicate-std
+[submodule "lib/protocol"]
+	path = lib/protocol
+	url = https://github.com/m0-foundation/protocol
+[submodule "lib/forge-std"]
+	path = lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "lib/v4-core"]
+	path = lib/v4-core
+	url = https://github.com/uniswap/v4-core
+[submodule "lib/v4-periphery"]
+	path = lib/v4-periphery
+	url = https://github.com/uniswap/v4-periphery
+[submodule "lib/predicate-std"]
+	path = lib/predicate-std
+	url = https://github.com/predicatelabs/predicate-std
+[submodule "lib/contracts"]
+	path = lib/contracts
+	url = https://github.com/across-protocol/contracts
+[submodule "compliant-counter/contracts/lib/forge-std"]
+	path = compliant-counter/contracts/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "counter/lib/forge-std"]
+	path = counter/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "counter/lib/predicate-contracts"]
+	path = counter/lib/predicate-contracts
+	url = https://github.com/PredicateLabs/predicate-contracts
+[submodule "centrifuge/lib/forge-std"]
+	path = centrifuge/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "centrifuge/lib/predicate-contracts"]
+	path = centrifuge/lib/predicate-contracts
+	url = https://github.com/PredicateLabs/predicate-contracts
+[submodule "centrifuge/lib/protocol-v3"]
+	path = centrifuge/lib/protocol-v3
+	url = https://github.com/centrifuge/protocol-v3.git
