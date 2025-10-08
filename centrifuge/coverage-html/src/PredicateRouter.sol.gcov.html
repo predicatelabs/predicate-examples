@@ -1,0 +1,257 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - lcov.info - src/PredicateRouter.sol</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="title">LCOV - code coverage report</td></tr>
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+            <tr>
+              <td width="100%">
+                <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="10%" class="headerValue"><a href="../index.html" title="Click to go to top-level">top level</a> - <a href="index.html" title="Click to go to directory src">src</a> - PredicateRouter.sol<span style="font-size: 80%;"> (source / <a href="PredicateRouter.sol.func-c.html" title="Click to go to function table">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="5%"></td>
+            <td width="5%" class="headerCovTableHead">Coverage</td>
+            <td width="5%" class="headerCovTableHead" title="Covered + Uncovered code">Total</td>
+            <td width="5%" class="headerCovTableHead" title="Exercised code only">Hit</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">lcov.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntryHi">90.2&nbsp;%</td>
+            <td class="headerCovTableEntry">51</td>
+            <td class="headerCovTableEntry">46</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test Date:</td>
+            <td class="headerValue">2025-10-01 21:48:52</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntryMed">77.8&nbsp;%</td>
+            <td class="headerCovTableEntry">9</td>
+            <td class="headerCovTableEntry">7</td>
+          </tr>
+                  <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+          </table>
+
+          <table cellpadding=0 cellspacing=0 border=0>
+            <tr>
+              <td><br></td>
+            </tr>
+            <tr>
+              <td>
+<pre class="sourceHeading">            Line data    Source code</pre>
+<pre class="source">
+<span id="L1"><span class="lineNum">       1</span>              : // SPDX-License-Identifier: BUSL-1.1</span>
+<span id="L2"><span class="lineNum">       2</span>              : pragma solidity 0.8.28;</span>
+<span id="L3"><span class="lineNum">       3</span>              : </span>
+<span id="L4"><span class="lineNum">       4</span>              : import {Auth} from &quot;protocol-v3/misc/Auth.sol&quot;;</span>
+<span id="L5"><span class="lineNum">       5</span>              : import {IBaseVault} from &quot;protocol-v3/vaults/interfaces/IBaseVault.sol&quot;;</span>
+<span id="L6"><span class="lineNum">       6</span>              : import {BaseSyncDepositVault} from &quot;protocol-v3/vaults/BaseVaults.sol&quot;;</span>
+<span id="L7"><span class="lineNum">       7</span>              : import {IVault} from &quot;protocol-v3/spoke/interfaces/IVault.sol&quot;;</span>
+<span id="L8"><span class="lineNum">       8</span>              : import {ISpoke, VaultDetails} from &quot;protocol-v3/spoke/interfaces/ISpoke.sol&quot;;</span>
+<span id="L9"><span class="lineNum">       9</span>              : import {IShareToken} from &quot;protocol-v3/spoke/interfaces/IShareToken.sol&quot;;</span>
+<span id="L10"><span class="lineNum">      10</span>              : import {IERC20} from &quot;protocol-v3/misc/interfaces/IERC20.sol&quot;;</span>
+<span id="L11"><span class="lineNum">      11</span>              : import {SafeTransferLib} from &quot;protocol-v3/misc/libraries/SafeTransferLib.sol&quot;;</span>
+<span id="L12"><span class="lineNum">      12</span>              : import {IMemberlist} from &quot;protocol-v3/hooks/interfaces/IMemberlist.sol&quot;;</span>
+<span id="L13"><span class="lineNum">      13</span>              : import {PredicateMessage} from &quot;predicate-contracts/interfaces/IPredicateClient.sol&quot;;</span>
+<span id="L14"><span class="lineNum">      14</span>              : import {PredicateClient} from &quot;predicate-contracts/mixins/PredicateClient.sol&quot;;</span>
+<span id="L15"><span class="lineNum">      15</span>              : </span>
+<span id="L16"><span class="lineNum">      16</span>              : /// @title PredicateRouter</span>
+<span id="L17"><span class="lineNum">      17</span>              : /// @notice Router that validates predicate messages, records temporary membership on the share-token hook, and</span>
+<span id="L18"><span class="lineNum">      18</span>              : ///         executes Centrifuge vault actions (deposit/mint) in a single transaction.</span>
+<span id="L19"><span class="lineNum">      19</span>              : /// @dev    This contract does three things when a user calls `deposit`/`mint`:</span>
+<span id="L20"><span class="lineNum">      20</span>              : ///             1. Verifies the predicate message against the configured `PredicateManager` via `PredicateClient`.</span>
+<span id="L21"><span class="lineNum">      21</span>              : ///             2. Updates the share token’s hook data (using the hook-manager role) with the attestation expiry.</span>
+<span id="L22"><span class="lineNum">      22</span>              : ///             3. Pulls user assets, approves the vault, and forwards the call to the Centrifuge vault.</span>
+<span id="L23"><span class="lineNum">      23</span>              : ///         The hook then enforces the expiry on any subsequent transfer of the share token.</span>
+<span id="L24"><span class="lineNum">      24</span>              : contract PredicateRouter is PredicateClient, Auth {</span>
+<span id="L25"><span class="lineNum">      25</span>              :     ISpoke public immutable spoke;</span>
+<span id="L26"><span class="lineNum">      26</span>              : </span>
+<span id="L27"><span class="lineNum">      27</span>              :     /// @notice Emitted after membership is updated for a particular vault action.</span>
+<span id="L28"><span class="lineNum">      28</span>              :     event PredicateMemberAuthorized(</span>
+<span id="L29"><span class="lineNum">      29</span>              :         address indexed shareToken,</span>
+<span id="L30"><span class="lineNum">      30</span>              :         address indexed vault,</span>
+<span id="L31"><span class="lineNum">      31</span>              :         address indexed user,</span>
+<span id="L32"><span class="lineNum">      32</span>              :         bytes4 actionSelector,</span>
+<span id="L33"><span class="lineNum">      33</span>              :         uint64 validUntil</span>
+<span id="L34"><span class="lineNum">      34</span>              :     );</span>
+<span id="L35"><span class="lineNum">      35</span>              : </span>
+<span id="L36"><span class="lineNum">      36</span>              :     error HookNotConfigured();</span>
+<span id="L37"><span class="lineNum">      37</span>              :     error ShareTokenNotFound();</span>
+<span id="L38"><span class="lineNum">      38</span>              :     error InvalidOwner();</span>
+<span id="L39"><span class="lineNum">      39</span>              :     error PredicateVerificationFailed();</span>
+<span id="L40"><span class="lineNum">      40</span>              :     error PredicateMessageExpired();</span>
+<span id="L41"><span class="lineNum">      41</span>              : </span>
+<span id="L42"><span class="lineNum">      42</span>              :     /// @param spoke_            Centrifuge spoke used to resolve share tokens (pool + share class).</span>
+<span id="L43"><span class="lineNum">      43</span>              :     /// @param predicateManager  Predicate service manager that validates predicate messages.</span>
+<span id="L44"><span class="lineNum">      44</span>              :     /// @param policyID          Initial policy identifier used when building predicate tasks.</span>
+<span id="L45"><span class="lineNum">      45</span>              :     /// @param deployer          Address granted the initial auth role for router governance.</span>
+<span id="L46"><span class="lineNum">      46</span> <span class="tlaGNC">          14 :     constructor(ISpoke spoke_, address predicateManager, string memory policyID, address deployer) Auth(deployer) {</span></span>
+<span id="L47"><span class="lineNum">      47</span> <span class="tlaGNC">          14 :         spoke = spoke_;</span></span>
+<span id="L48"><span class="lineNum">      48</span> <span class="tlaGNC">          14 :         if (predicateManager != address(0)) {</span></span>
+<span id="L49"><span class="lineNum">      49</span> <span class="tlaGNC">          14 :             _initPredicateClient(predicateManager, policyID);</span></span>
+<span id="L50"><span class="lineNum">      50</span>              :         }</span>
+<span id="L51"><span class="lineNum">      51</span>              :     }</span>
+<span id="L52"><span class="lineNum">      52</span>              : </span>
+<span id="L53"><span class="lineNum">      53</span>              :     /// @notice Updates the predicate manager used for signature validation.</span>
+<span id="L54"><span class="lineNum">      54</span>              :     /// @param predicateManager New predicate manager address.</span>
+<span id="L55"><span class="lineNum">      55</span> <span class="tlaUNC">           0 :     function setPredicateManager(address predicateManager) external auth {</span></span>
+<span id="L56"><span class="lineNum">      56</span> <span class="tlaUNC">           0 :         _setPredicateManager(predicateManager);</span></span>
+<span id="L57"><span class="lineNum">      57</span>              :     }</span>
+<span id="L58"><span class="lineNum">      58</span>              : </span>
+<span id="L59"><span class="lineNum">      59</span>              :     /// @notice Updates the policy string used when constructing predicate tasks.</span>
+<span id="L60"><span class="lineNum">      60</span>              :     /// @param policyID New policy identifier (must be known to the registry).</span>
+<span id="L61"><span class="lineNum">      61</span> <span class="tlaUNC">           0 :     function setPolicy(string memory policyID) external auth {</span></span>
+<span id="L62"><span class="lineNum">      62</span> <span class="tlaUNC">           0 :         _setPolicy(policyID);</span></span>
+<span id="L63"><span class="lineNum">      63</span>              :     }</span>
+<span id="L64"><span class="lineNum">      64</span>              : </span>
+<span id="L65"><span class="lineNum">      65</span>              :     /// @notice Validates a predicate message, updates hook membership, and deposits assets into the vault.</span>
+<span id="L66"><span class="lineNum">      66</span>              :     /// @param vault      Target vault.</span>
+<span id="L67"><span class="lineNum">      67</span>              :     /// @param assets     Amount of underlying assets to deposit.</span>
+<span id="L68"><span class="lineNum">      68</span>              :     /// @param receiver   Address receiving the newly minted shares.</span>
+<span id="L69"><span class="lineNum">      69</span>              :     /// @param owner      Address providing the assets (must approve the router).</span>
+<span id="L70"><span class="lineNum">      70</span>              :     /// @param predicateMsg Predicate message covering this deposit call.</span>
+<span id="L71"><span class="lineNum">      71</span>              :     /// @return shares    Amount of shares minted to `receiver`.</span>
+<span id="L72"><span class="lineNum">      72</span> <span class="tlaGNC">           5 :     function deposit(</span></span>
+<span id="L73"><span class="lineNum">      73</span>              :         BaseSyncDepositVault vault,</span>
+<span id="L74"><span class="lineNum">      74</span>              :         uint256 assets,</span>
+<span id="L75"><span class="lineNum">      75</span>              :         address receiver,</span>
+<span id="L76"><span class="lineNum">      76</span>              :         address owner,</span>
+<span id="L77"><span class="lineNum">      77</span>              :         PredicateMessage calldata predicateMsg</span>
+<span id="L78"><span class="lineNum">      78</span>              :     ) external returns (uint256 shares) {</span>
+<span id="L79"><span class="lineNum">      79</span> <span class="tlaGNC">           5 :         require(owner == msg.sender || owner == address(this), InvalidOwner());</span></span>
+<span id="L80"><span class="lineNum">      80</span>              : </span>
+<span id="L81"><span class="lineNum">      81</span> <span class="tlaGNC">           5 :         bytes memory callData =</span></span>
+<span id="L82"><span class="lineNum">      82</span> <span class="tlaGNC">           5 :             abi.encodeWithSignature(&quot;deposit(address,uint256,address,address)&quot;, address(vault), assets, receiver, owner);</span></span>
+<span id="L83"><span class="lineNum">      83</span>              : </span>
+<span id="L84"><span class="lineNum">      84</span> <span class="tlaGNC">           5 :         (IShareToken shareToken, uint64 expiry) = _authorize(vault, receiver, msg.sender, predicateMsg, callData);</span></span>
+<span id="L85"><span class="lineNum">      85</span>              : </span>
+<span id="L86"><span class="lineNum">      86</span> <span class="tlaGNC">           2 :         VaultDetails memory details = spoke.vaultDetails(IBaseVault(address(vault)));</span></span>
+<span id="L87"><span class="lineNum">      87</span> <span class="tlaGNC">           2 :         _collectAssets(details.asset, owner, assets);</span></span>
+<span id="L88"><span class="lineNum">      88</span> <span class="tlaGNC">           2 :         _approveMax(details.asset, address(vault));</span></span>
+<span id="L89"><span class="lineNum">      89</span>              : </span>
+<span id="L90"><span class="lineNum">      90</span> <span class="tlaGNC">           2 :         shares = vault.deposit(assets, receiver);</span></span>
+<span id="L91"><span class="lineNum">      91</span> <span class="tlaGNC">           2 :         emit PredicateMemberAuthorized(address(shareToken), address(vault), receiver, _selector(callData), expiry);</span></span>
+<span id="L92"><span class="lineNum">      92</span>              :     }</span>
+<span id="L93"><span class="lineNum">      93</span>              : </span>
+<span id="L94"><span class="lineNum">      94</span>              :     /// @notice Validates a predicate message, updates hook membership, and mints shares by providing assets.</span>
+<span id="L95"><span class="lineNum">      95</span>              :     /// @param vault        Target vault.</span>
+<span id="L96"><span class="lineNum">      96</span>              :     /// @param shares       Amount of shares to mint.</span>
+<span id="L97"><span class="lineNum">      97</span>              :     /// @param receiver     Address receiving the shares (membership is written for this account).</span>
+<span id="L98"><span class="lineNum">      98</span>              :     /// @param owner        Address providing the assets (must approve the router).</span>
+<span id="L99"><span class="lineNum">      99</span>              :     /// @param predicateMsg  Predicate message covering this mint call.</span>
+<span id="L100"><span class="lineNum">     100</span>              :     /// @return assets      Amount of assets actually consumed by the mint (mirrors the vault return value).</span>
+<span id="L101"><span class="lineNum">     101</span> <span class="tlaGNC">           1 :     function mint(</span></span>
+<span id="L102"><span class="lineNum">     102</span>              :         BaseSyncDepositVault vault,</span>
+<span id="L103"><span class="lineNum">     103</span>              :         uint256 shares,</span>
+<span id="L104"><span class="lineNum">     104</span>              :         address receiver,</span>
+<span id="L105"><span class="lineNum">     105</span>              :         address owner,</span>
+<span id="L106"><span class="lineNum">     106</span>              :         PredicateMessage calldata predicateMsg</span>
+<span id="L107"><span class="lineNum">     107</span>              :     ) external returns (uint256 assets) {</span>
+<span id="L108"><span class="lineNum">     108</span> <span class="tlaGNC">           1 :         require(owner == msg.sender || owner == address(this), InvalidOwner());</span></span>
+<span id="L109"><span class="lineNum">     109</span>              : </span>
+<span id="L110"><span class="lineNum">     110</span> <span class="tlaGNC">           1 :         bytes memory callData =</span></span>
+<span id="L111"><span class="lineNum">     111</span> <span class="tlaGNC">           1 :             abi.encodeWithSignature(&quot;mint(address,uint256,address,address)&quot;, address(vault), shares, receiver, owner);</span></span>
+<span id="L112"><span class="lineNum">     112</span>              : </span>
+<span id="L113"><span class="lineNum">     113</span> <span class="tlaGNC">           1 :         (IShareToken shareToken, uint64 expiry) = _authorize(vault, receiver, msg.sender, predicateMsg, callData);</span></span>
+<span id="L114"><span class="lineNum">     114</span>              : </span>
+<span id="L115"><span class="lineNum">     115</span> <span class="tlaGNC">           1 :         VaultDetails memory details = spoke.vaultDetails(IBaseVault(address(vault)));</span></span>
+<span id="L116"><span class="lineNum">     116</span> <span class="tlaGNC">           1 :         assets = vault.previewMint(shares);</span></span>
+<span id="L117"><span class="lineNum">     117</span> <span class="tlaGNC">           1 :         _collectAssets(details.asset, owner, assets);</span></span>
+<span id="L118"><span class="lineNum">     118</span> <span class="tlaGNC">           1 :         _approveMax(details.asset, address(vault));</span></span>
+<span id="L119"><span class="lineNum">     119</span>              : </span>
+<span id="L120"><span class="lineNum">     120</span> <span class="tlaGNC">           1 :         assets = vault.mint(shares, receiver);</span></span>
+<span id="L121"><span class="lineNum">     121</span> <span class="tlaGNC">           1 :         emit PredicateMemberAuthorized(address(shareToken), address(vault), receiver, _selector(callData), expiry);</span></span>
+<span id="L122"><span class="lineNum">     122</span>              :     }</span>
+<span id="L123"><span class="lineNum">     123</span>              : </span>
+<span id="L124"><span class="lineNum">     124</span>              :     /// @dev Validates the attestation and writes the expiry into the share token hook.</span>
+<span id="L125"><span class="lineNum">     125</span>              :     /// @param vault              Vault whose share token should be updated.</span>
+<span id="L126"><span class="lineNum">     126</span>              :     /// @param receiver           Account that receives temporary membership for this call.</span>
+<span id="L127"><span class="lineNum">     127</span>              :     /// @param caller             Real EVM sender (propagated into the attestation check).</span>
+<span id="L128"><span class="lineNum">     128</span>              :     /// @param predicateMsg       Predicate message authorising the call.</span>
+<span id="L129"><span class="lineNum">     129</span>              :     /// @param encodedSigAndArgs  ABI-encoded selector + arguments for the target call.</span>
+<span id="L130"><span class="lineNum">     130</span>              :     /// @return shareToken        Share token instance resolved from the spoke.</span>
+<span id="L131"><span class="lineNum">     131</span>              :     /// @return expiry            Expiry timestamp (stored in the hook data).</span>
+<span id="L132"><span class="lineNum">     132</span> <span class="tlaGNC">           6 :     function _authorize(</span></span>
+<span id="L133"><span class="lineNum">     133</span>              :         BaseSyncDepositVault vault,</span>
+<span id="L134"><span class="lineNum">     134</span>              :         address receiver,</span>
+<span id="L135"><span class="lineNum">     135</span>              :         address caller,</span>
+<span id="L136"><span class="lineNum">     136</span>              :         PredicateMessage calldata predicateMsg,</span>
+<span id="L137"><span class="lineNum">     137</span>              :         bytes memory encodedSigAndArgs</span>
+<span id="L138"><span class="lineNum">     138</span>              :     ) internal returns (IShareToken shareToken, uint64 expiry) {</span>
+<span id="L139"><span class="lineNum">     139</span> <span class="tlaGNC">           6 :         uint256 expireBy = predicateMsg.expireByTime;</span></span>
+<span id="L140"><span class="lineNum">     140</span> <span class="tlaGNC">           6 :         if (expireBy &lt;= block.timestamp || expireBy &gt; type(uint64).max) {</span></span>
+<span id="L141"><span class="lineNum">     141</span> <span class="tlaGNC">           1 :             revert PredicateMessageExpired();</span></span>
+<span id="L142"><span class="lineNum">     142</span>              :         }</span>
+<span id="L143"><span class="lineNum">     143</span>              : </span>
+<span id="L144"><span class="lineNum">     144</span> <span class="tlaGNC">           5 :         if (!_authorizeTransaction(predicateMsg, encodedSigAndArgs, caller, 0)) {</span></span>
+<span id="L145"><span class="lineNum">     145</span> <span class="tlaUNC">           0 :             revert PredicateVerificationFailed();</span></span>
+<span id="L146"><span class="lineNum">     146</span>              :         }</span>
+<span id="L147"><span class="lineNum">     147</span>              : </span>
+<span id="L148"><span class="lineNum">     148</span> <span class="tlaGNC">           3 :         expiry = uint64(expireBy);</span></span>
+<span id="L149"><span class="lineNum">     149</span>              : </span>
+<span id="L150"><span class="lineNum">     150</span> <span class="tlaGNC">           3 :         IVault vaultInterface = IVault(address(vault));</span></span>
+<span id="L151"><span class="lineNum">     151</span> <span class="tlaGNC">           3 :         shareToken = spoke.shareToken(vaultInterface.poolId(), vaultInterface.scId());</span></span>
+<span id="L152"><span class="lineNum">     152</span> <span class="tlaGNC">           3 :         if (address(shareToken) == address(0)) revert ShareTokenNotFound();</span></span>
+<span id="L153"><span class="lineNum">     153</span>              : </span>
+<span id="L154"><span class="lineNum">     154</span> <span class="tlaGNC">           3 :         address hookAddress = shareToken.hook();</span></span>
+<span id="L155"><span class="lineNum">     155</span> <span class="tlaGNC">           3 :         if (hookAddress == address(0)) revert HookNotConfigured();</span></span>
+<span id="L156"><span class="lineNum">     156</span>              : </span>
+<span id="L157"><span class="lineNum">     157</span> <span class="tlaGNC">           3 :         IMemberlist(hookAddress).updateMember(address(shareToken), receiver, expiry);</span></span>
+<span id="L158"><span class="lineNum">     158</span>              :     }</span>
+<span id="L159"><span class="lineNum">     159</span>              : </span>
+<span id="L160"><span class="lineNum">     160</span>              :     /// @dev Extracts the first four bytes from the encoded call data.</span>
+<span id="L161"><span class="lineNum">     161</span> <span class="tlaGNC">           3 :     function _selector(bytes memory encodedSigAndArgs) internal pure returns (bytes4 selector) {</span></span>
+<span id="L162"><span class="lineNum">     162</span> <span class="tlaGNC">           3 :         if (encodedSigAndArgs.length &gt;= 4) {</span></span>
+<span id="L163"><span class="lineNum">     163</span>              :             assembly {</span>
+<span id="L164"><span class="lineNum">     164</span> <span class="tlaGNC">           3 :                 selector := mload(add(encodedSigAndArgs, 32))</span></span>
+<span id="L165"><span class="lineNum">     165</span>              :             }</span>
+<span id="L166"><span class="lineNum">     166</span>              :         }</span>
+<span id="L167"><span class="lineNum">     167</span>              :     }</span>
+<span id="L168"><span class="lineNum">     168</span>              : </span>
+<span id="L169"><span class="lineNum">     169</span>              :     /// @dev Pulls assets from the owner to the router (unless the router is the owner).</span>
+<span id="L170"><span class="lineNum">     170</span> <span class="tlaGNC">           3 :     function _collectAssets(address asset, address owner, uint256 amount) internal {</span></span>
+<span id="L171"><span class="lineNum">     171</span> <span class="tlaGNC">           3 :         if (amount == 0 || owner == address(this)) return;</span></span>
+<span id="L172"><span class="lineNum">     172</span> <span class="tlaGNC">           3 :         SafeTransferLib.safeTransferFrom(asset, owner, address(this), amount);</span></span>
+<span id="L173"><span class="lineNum">     173</span>              :     }</span>
+<span id="L174"><span class="lineNum">     174</span>              : </span>
+<span id="L175"><span class="lineNum">     175</span>              :     /// @dev Approves the vault for unlimited transfers if no allowance is set yet.</span>
+<span id="L176"><span class="lineNum">     176</span> <span class="tlaGNC">           3 :     function _approveMax(address asset, address spender) internal {</span></span>
+<span id="L177"><span class="lineNum">     177</span> <span class="tlaGNC">           3 :         if (IERC20(asset).allowance(address(this), spender) == 0) {</span></span>
+<span id="L178"><span class="lineNum">     178</span> <span class="tlaGNC">           3 :             SafeTransferLib.safeApprove(asset, spender, type(uint256).max);</span></span>
+<span id="L179"><span class="lineNum">     179</span>              :         }</span>
+<span id="L180"><span class="lineNum">     180</span>              :     }</span>
+<span id="L181"><span class="lineNum">     181</span>              : }</span>
+        </pre>
+              </td>
+            </tr>
+          </table>
+          <br>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+            <tr><td class="versionInfo">Generated by: <a href="https://github.com//linux-test-project/lcov" target="_parent">LCOV version 2.3.2-1</a></td></tr>
+          </table>
+          <br>
+
+</body>
+</html>

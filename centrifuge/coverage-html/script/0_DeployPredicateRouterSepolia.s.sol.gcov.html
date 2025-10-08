@@ -1,0 +1,136 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - lcov.info - script/0_DeployPredicateRouterSepolia.s.sol</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="title">LCOV - code coverage report</td></tr>
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+            <tr>
+              <td width="100%">
+                <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="10%" class="headerValue"><a href="../index.html" title="Click to go to top-level">top level</a> - <a href="index.html" title="Click to go to directory script">script</a> - 0_DeployPredicateRouterSepolia.s.sol<span style="font-size: 80%;"> (source / <a href="0_DeployPredicateRouterSepolia.s.sol.func-c.html" title="Click to go to function table">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="5%"></td>
+            <td width="5%" class="headerCovTableHead">Coverage</td>
+            <td width="5%" class="headerCovTableHead" title="Covered + Uncovered code">Total</td>
+            <td width="5%" class="headerCovTableHead" title="Exercised code only">Hit</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">lcov.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntryLo">0.0&nbsp;%</td>
+            <td class="headerCovTableEntry">21</td>
+            <td class="headerCovTableEntry">0</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test Date:</td>
+            <td class="headerValue">2025-10-01 21:48:52</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntryLo">0.0&nbsp;%</td>
+            <td class="headerCovTableEntry">2</td>
+            <td class="headerCovTableEntry">0</td>
+          </tr>
+                  <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+          </table>
+
+          <table cellpadding=0 cellspacing=0 border=0>
+            <tr>
+              <td><br></td>
+            </tr>
+            <tr>
+              <td>
+<pre class="sourceHeading">            Line data    Source code</pre>
+<pre class="source">
+<span id="L1"><span class="lineNum">       1</span>              : // SPDX-License-Identifier: BUSL-1.1</span>
+<span id="L2"><span class="lineNum">       2</span>              : pragma solidity 0.8.28;</span>
+<span id="L3"><span class="lineNum">       3</span>              : </span>
+<span id="L4"><span class="lineNum">       4</span>              : import &quot;forge-std/Script.sol&quot;;</span>
+<span id="L5"><span class="lineNum">       5</span>              : import &quot;forge-std/console2.sol&quot;;</span>
+<span id="L6"><span class="lineNum">       6</span>              : </span>
+<span id="L7"><span class="lineNum">       7</span>              : import {PredicateRouter} from &quot;src/PredicateRouter.sol&quot;;</span>
+<span id="L8"><span class="lineNum">       8</span>              : import {ISpoke} from &quot;protocol-v3/spoke/interfaces/ISpoke.sol&quot;;</span>
+<span id="L9"><span class="lineNum">       9</span>              : </span>
+<span id="L10"><span class="lineNum">      10</span>              : /// @notice Forge script that deploys the PredicateRouter to the Sepolia testnet and optionally verifies it.</span>
+<span id="L11"><span class="lineNum">      11</span>              : /// @dev Environment variables (all optional except PRIVATE_KEY when broadcasting):</span>
+<span id="L12"><span class="lineNum">      12</span>              : ///         - PRIVATE_KEY: hex string (w/o 0x) or decimal of broadcaster key</span>
+<span id="L13"><span class="lineNum">      13</span>              : ///         - SPOKE_ADDRESS: Centrifuge spoke contract on Sepolia (defaults to address(0))</span>
+<span id="L14"><span class="lineNum">      14</span>              : ///         - PREDICATE_MANAGER_ADDRESS: Predicate service manager (defaults to address(0))</span>
+<span id="L15"><span class="lineNum">      15</span>              : ///         - POLICY_ID: Predicate policy identifier (defaults to empty string)</span>
+<span id="L16"><span class="lineNum">      16</span>              : /// Run with `forge script script/0_DeployPredicateRouterSepolia.s.sol:DeployPredicateRouterSepolia --rpc-url $SEPOLIA_RPC_URL --broadcast` to deploy.</span>
+<span id="L17"><span class="lineNum">      17</span>              : /// Verify with `forge verify-contract --chain-id 11155111 &lt;ROUTER_ADDRESS&gt; src/PredicateRouter.sol:PredicateRouter --constructor-args $(cast abi-encode &quot;constructor(address,address,string,address)&quot; &lt;SPOKE&gt; &lt;MANAGER&gt; &lt;POLICY&gt; &lt;DEPLOYER&gt;) --etherscan-api-key $ETHERSCAN_API_KEY --watch`</span>
+<span id="L18"><span class="lineNum">      18</span>              : contract DeployPredicateRouterSepolia is Script {</span>
+<span id="L19"><span class="lineNum">      19</span>              :     error UnexpectedChain(uint256 currentChainId);</span>
+<span id="L20"><span class="lineNum">      20</span>              : </span>
+<span id="L21"><span class="lineNum">      21</span>              :     struct Config {</span>
+<span id="L22"><span class="lineNum">      22</span>              :         address spoke;</span>
+<span id="L23"><span class="lineNum">      23</span>              :         address predicateManager;</span>
+<span id="L24"><span class="lineNum">      24</span>              :         string policyId;</span>
+<span id="L25"><span class="lineNum">      25</span>              :     }</span>
+<span id="L26"><span class="lineNum">      26</span>              : </span>
+<span id="L27"><span class="lineNum">      27</span> <span class="tlaUNC">           0 :     function run() external returns (PredicateRouter router) {</span></span>
+<span id="L28"><span class="lineNum">      28</span> <span class="tlaUNC">           0 :         Config memory cfg = _loadConfig();</span></span>
+<span id="L29"><span class="lineNum">      29</span>              : </span>
+<span id="L30"><span class="lineNum">      30</span> <span class="tlaUNC">           0 :         if (block.chainid != 11155111) {</span></span>
+<span id="L31"><span class="lineNum">      31</span> <span class="tlaUNC">           0 :             revert UnexpectedChain(block.chainid);</span></span>
+<span id="L32"><span class="lineNum">      32</span>              :         }</span>
+<span id="L33"><span class="lineNum">      33</span>              : </span>
+<span id="L34"><span class="lineNum">      34</span> <span class="tlaUNC">           0 :         uint256 deployerKey = vm.envUint(&quot;PRIVATE_KEY&quot;);</span></span>
+<span id="L35"><span class="lineNum">      35</span> <span class="tlaUNC">           0 :         address deployer = vm.addr(deployerKey);</span></span>
+<span id="L36"><span class="lineNum">      36</span>              : </span>
+<span id="L37"><span class="lineNum">      37</span> <span class="tlaUNC">           0 :         console2.log(&quot;Deploying PredicateRouter on Sepolia with sender&quot;, deployer);</span></span>
+<span id="L38"><span class="lineNum">      38</span> <span class="tlaUNC">           0 :         console2.log(&quot;Spoke address&quot;, cfg.spoke);</span></span>
+<span id="L39"><span class="lineNum">      39</span> <span class="tlaUNC">           0 :         console2.log(&quot;Predicate manager&quot;, cfg.predicateManager);</span></span>
+<span id="L40"><span class="lineNum">      40</span> <span class="tlaUNC">           0 :         console2.log(&quot;Policy ID&quot;, bytes(cfg.policyId).length &gt; 0 ? cfg.policyId : &quot;&lt;empty&gt;&quot;);</span></span>
+<span id="L41"><span class="lineNum">      41</span>              : </span>
+<span id="L42"><span class="lineNum">      42</span> <span class="tlaUNC">           0 :         vm.startBroadcast(deployerKey);</span></span>
+<span id="L43"><span class="lineNum">      43</span> <span class="tlaUNC">           0 :         router = new PredicateRouter(ISpoke(cfg.spoke), cfg.predicateManager, cfg.policyId, deployer);</span></span>
+<span id="L44"><span class="lineNum">      44</span> <span class="tlaUNC">           0 :         vm.stopBroadcast();</span></span>
+<span id="L45"><span class="lineNum">      45</span>              : </span>
+<span id="L46"><span class="lineNum">      46</span> <span class="tlaUNC">           0 :         console2.log(&quot;PredicateRouter deployed&quot;, address(router));</span></span>
+<span id="L47"><span class="lineNum">      47</span>              :     }</span>
+<span id="L48"><span class="lineNum">      48</span>              : </span>
+<span id="L49"><span class="lineNum">      49</span> <span class="tlaUNC">           0 :     function _loadConfig() internal view returns (Config memory cfg) {</span></span>
+<span id="L50"><span class="lineNum">      50</span> <span class="tlaUNC">           0 :         if (vm.envExists(&quot;SPOKE_ADDRESS&quot;)) {</span></span>
+<span id="L51"><span class="lineNum">      51</span> <span class="tlaUNC">           0 :             cfg.spoke = vm.envAddress(&quot;SPOKE_ADDRESS&quot;);</span></span>
+<span id="L52"><span class="lineNum">      52</span>              :         }</span>
+<span id="L53"><span class="lineNum">      53</span> <span class="tlaUNC">           0 :         if (vm.envExists(&quot;PREDICATE_MANAGER_ADDRESS&quot;)) {</span></span>
+<span id="L54"><span class="lineNum">      54</span> <span class="tlaUNC">           0 :             cfg.predicateManager = vm.envAddress(&quot;PREDICATE_MANAGER_ADDRESS&quot;);</span></span>
+<span id="L55"><span class="lineNum">      55</span>              :         }</span>
+<span id="L56"><span class="lineNum">      56</span> <span class="tlaUNC">           0 :         if (vm.envExists(&quot;POLICY_ID&quot;)) {</span></span>
+<span id="L57"><span class="lineNum">      57</span> <span class="tlaUNC">           0 :             cfg.policyId = vm.envString(&quot;POLICY_ID&quot;);</span></span>
+<span id="L58"><span class="lineNum">      58</span>              :         }</span>
+<span id="L59"><span class="lineNum">      59</span>              :     }</span>
+<span id="L60"><span class="lineNum">      60</span>              : }</span>
+        </pre>
+              </td>
+            </tr>
+          </table>
+          <br>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+            <tr><td class="versionInfo">Generated by: <a href="https://github.com//linux-test-project/lcov" target="_parent">LCOV version 2.3.2-1</a></td></tr>
+          </table>
+          <br>
+
+</body>
+</html>
